@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react"
-import GridNode from "./GridNode"
-import { randomNumber } from '../SortingVisualizer'
-
+import GridNode from "../../GridNode";
+import randomNumber from "../../../utils/random";
 
 // Need to clarify if the node is the start node or the end node.
 //      each node has a row, col property to track where it is.

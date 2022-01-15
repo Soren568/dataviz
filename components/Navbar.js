@@ -10,6 +10,7 @@ const Navbar = () => {
             <div className="hidden md:flex space-x-5 md:visible">
                 <Link href="/sorts"><a>Sorts</a></Link>
                 <Link href="/pathfinding"><a>Path Finding</a></Link>
+                <Link href="/percolation"><a>Percolation</a></Link>
                 <Link href="/datastructures"><a>Data Structures</a></Link>
             </div>
         </nav>

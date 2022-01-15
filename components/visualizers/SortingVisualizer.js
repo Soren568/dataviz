@@ -1,4 +1,6 @@
 import React, { useState, useEffect, createRef } from 'react'
+import randomNumber from '../../utils/random';
+import sleep from '../../utils/sleep';
 
 function SortingVisualizer({ userReset, setTitle, isPlaying }) {
     const [comparing, setComparing] = useState([]);
@@ -23,6 +25,7 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
     // ========================== BUBBLE SORT ============================
     // ======================================================================
     const bubbleSort = async () => {
+        console.log({ refArray })
         setTitle("Bubble Sort")
         for (let i = 0; i < array.length; i++) {
             for (let j = 0; j < array.length - i - 1; j++) {
@@ -31,8 +34,8 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
                     let newHeightJ1 = (array[j] / 1000) * 384;
                     let newHeightJ2 = (array[j + 1] / 1000) * 384;
                     await swap(array, j, (j + 1), 0.2)
-                    refArray[j + 1].current.style.height = `${newHeightJ1}px`
-                    refArray[j].current.style.height = `${newHeightJ2}px`
+                    refArray[j + 1].style.height = `${newHeightJ1}px`
+                    refArray[j].style.height = `${newHeightJ2}px`
                 }
             }
         }
@@ -60,8 +63,8 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
             let heightMax = (array[maxIndex] / 1000) * 384;
             let heightSwapped = (array[array.length - i - 1] / 1000) * 384;
             await swap(array, (array.length - i - 1), maxIndex, .5)
-            refArray[array.length - i - 1].current.style.height = `${heightMax}px`
-            refArray[maxIndex].current.style.height = `${heightSwapped}px`
+            refArray[array.length - i - 1].style.height = `${heightMax}px`
+            refArray[maxIndex].style.height = `${heightSwapped}px`
         }
         console.log(array)
         setComparing([])
@@ -85,8 +88,8 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
                 await sleep(5)
                 setComparing([j])
                 array[j + 1] = array[j]
-                refArray[j + 1].current.style.height = refArray[j].current.style.height
-                refArray[j].current.style.height = `${tempHeight}px`
+                refArray[j + 1].style.height = refArray[j].style.height
+                refArray[j].style.height = `${tempHeight}px`
                 j--
             }
             array[j + 1] = temp;
@@ -122,16 +125,16 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
                 let heightI = (array[i] / 1000) * 384;
                 let heightPivot = (array[pivotIdx] / 1000) * 384;
                 await swap(arr, i, pivotIdx, 10)
-                refArray[pivotIdx].current.style.height = `${heightI}px`
-                refArray[i].current.style.height = `${heightPivot}px`
+                refArray[pivotIdx].style.height = `${heightI}px`
+                refArray[i].style.height = `${heightPivot}px`
                 pivotIdx++
             }
         }
         let heightEnd = (array[end] / 1000) * 384;
         let heightPivot = (array[pivotIdx] / 1000) * 384;
         await swap(arr, pivotIdx, end)
-        refArray[pivotIdx].current.style.height = `${heightEnd}px`
-        refArray[end].current.style.height = `${heightPivot}px`
+        refArray[pivotIdx].style.height = `${heightEnd}px`
+        refArray[end].style.height = `${heightPivot}px`
         // // console.log(end)
         // console.log(end, refArray[end])
         return pivotIdx
@@ -220,7 +223,7 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
 
     function divHeight(index) {
         console.log(refArray[index], index)
-        return parseFloat(refArray[index].current.style.height.slice(0, -2))
+        return parseFloat(refArray[index].style.height.slice(0, -2))
     }
     async function swap(arr, j, jPlus, speed) {
         await sleep(speed)
@@ -234,15 +237,13 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
         await sleep(speed)
         let temp = refArray[a]
         // swap values
-        refArray[a].current.value = refArray[b].current.value
-        refArray[b].current.value = temp.current.value
+        refArray[a].value = refArray[b].value
+        refArray[b].value = temp.value
         // swap heights
-        refArray[a].current.style.height = refArray[b].current.style.height
-        refArray[b].current.style.height = temp.current.style.height
+        refArray[a].style.height = refArray[b].style.height
+        refArray[b].style.height = temp.style.height
     }
-    function sleep(ms) {
-        return new Promise(res => setTimeout(res, ms))
-    }
+
 
 
     return (
@@ -257,7 +258,7 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
                     let bgColor = (comparing.includes(i) ? 'bg-blue-400' : "bg-blue-600")
                     let value = num
                     return (
-                        <div key={i} style={barStyle} ref={refArray[i]} value={value} className={`array-bar mt-auto w-1 md:w-[4px] lg:w-[6px] xl:w-[8px] ${bgColor} hover:bg-red-500 `} onClick={() => console.log(value)} onMouseEnter={() => setHoverVal(value)} onMouseLeave={() => setHoverVal()}></div>
+                        <div key={i} style={barStyle} ref={(ref) => { refArray[i] = ref; return true; }} value={value} className={`array-bar mt-auto w-1 md:w-[4px] lg:w-[6px] xl:w-[8px] ${bgColor} hover:bg-red-500 `} onClick={() => console.log(value)} onMouseEnter={() => setHoverVal(value)} onMouseLeave={() => setHoverVal()}></div>
                     )
                 }
                 )}
@@ -267,12 +268,12 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
                 <p className="text-xs text-gray-500 tracking-wide">{notes}</p>
             </div>
             <div className="w-3/4 flex justify-between mx-auto flex-wrap ">
-                <button onClick={() => mergeSort()} className="px-4 my-1 py-1 bg-gray-500 text-xs tracking-widest uppercase text-gray-300 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Merge Sort</button>
-                <button onClick={() => quickSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-300 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Quick Sort</button>
-                <button onClick={() => heapSort()} className="px-4 my-1 py-1 bg-gray-500 text-xs tracking-widest uppercase text-gray-300 hover:bg-blue-600 rounded-lg transition-all ease-in-out" >Heap Sort</button>
-                <button onClick={() => bubbleSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-300 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Bubble Sort</button>
-                <button onClick={() => selectionSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-300 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Selection Sort</button>
-                <button onClick={() => insertionSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-300 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Insertion Sort</button>
+                <button onClick={() => mergeSort()} className="px-4 my-1 py-1 bg-gray-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Merge Sort</button>
+                <button onClick={() => quickSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Quick Sort</button>
+                <button onClick={() => heapSort()} className="px-4 my-1 py-1 bg-gray-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out" >Heap Sort</button>
+                <button onClick={() => bubbleSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Bubble Sort</button>
+                <button onClick={() => selectionSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Selection Sort</button>
+                <button onClick={() => insertionSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Insertion Sort</button>
             </div>
         </div>
     )
@@ -282,8 +283,6 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
 // ========================== EXPORTS ============================
 // ======================================================================
 
-export function randomNumber(min, max) {
-    return Math.floor(Math.random() * (max - min) + min);
-}
+
 
 export default SortingVisualizer

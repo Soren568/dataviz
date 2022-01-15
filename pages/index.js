@@ -1,4 +1,4 @@
-import Head from 'next/head'
+
 import Image from 'next/image'
 import Navbar from '../components/Navbar'
 import { Canvas } from '@react-three/fiber';
@@ -6,11 +6,7 @@ import Render from '../components/threejs/Render';
 export default function Home() {
   return (
     <div className="w-full h-full">
-      <Head>
-        <title>DataViz</title>
-        <meta name="description" content="Algorithm and data visualizer" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+
       <div className="hero w-full h-full flex">
         <div className="flex flex-col items-center justify-center w-full">
           <div className="w-2/3">
