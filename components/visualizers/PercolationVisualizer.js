@@ -4,6 +4,7 @@ import randomNumber from '../../utils/random'
 import sleep from '../../utils/sleep'
 
 function PercolationVisualizer({ }) {
+    const [title, setTitle] = useState("Percolation")
     const [nodes, setNodes] = useState([]);
     const [userReset, setUserReset] = useState(false)
     const [nodeRefs, setNodeRefs] = useState([]);
@@ -12,17 +13,24 @@ function PercolationVisualizer({ }) {
 
     const NUM_ROWS = 24
     const NUM_COLS = 24
+    const PERC_PROB = .6
 
 
 
     useEffect(() => {
+        setTitle("percolation")
+        setGrid()
+    }, [userReset])
+
+    async function setGrid() {
         let tempRefArr = Array(NUM_ROWS * NUM_COLS).fill().map(() => createRef())
         const nodeArr = [];
         let i = 0
         for (let r = 0; r < NUM_ROWS; r++) {
             const currentRow = [];
             for (let c = 0; c < NUM_COLS; c++) {
-                let isBlocked = Math.random() > .593;
+                let isBlocked = Math.random() > PERC_PROB;
+                animateReset([r, c, i, isBlocked])
                 currentRow.push([r, c, i, isBlocked])
                 i++
             }
@@ -31,62 +39,68 @@ function PercolationVisualizer({ }) {
         setVisitedNodes(new Map())
         setNodeRefs(tempRefArr)
         setNodes(nodeArr)
-    }, [userReset])
-
-    async function clearGrid() {
-        for (let i = 0; i < nodes.length; i++) {
-            for (let j = 0; j < nodes[0].length; j++) {
-                console.log(nodes[i][j])
-                if (!nodes[i][j][3]) {
-                    await sleep(1)
-                    nodeRefs[(i * 12) + j].className = "w-4 h-4 border border-gray-800"
-                }
-            }
-        }
     }
 
     const runPercolation = async (nodes) => {
-        let topVisited = {}
+        let failed = {}
         let visited = {}
         for (let i = 0; i < NUM_COLS; i++) {
             if (nodes[0][i][3] == false) {
-                let percolates = await explore(nodes, 0, i, visited, topVisited)
+                var percolates = await explore(nodes, 0, i, visited, failed)
                 if (percolates) {
                     await animateResult(visited, true)
                     break
                 } else {
-                    await animateResult(visited, false)
+                    failed = { ...failed, ...visited }
+                    visited = {}
+                    await animateResult(failed, false)
                 }
             }
         }
+        if (percolates) {
+            setTitle("percolates")
+        } else {
+            setTitle("does not percolate")
+        }
     }
-
+    async function animateReset(visitedNode) {
+        if (nodeRefs[visitedNode[2]] != undefined && !visitedNode[3]) {
+            nodeRefs[visitedNode[2]].className = "w-4 h-4 border border-gray-800 bg-gray-700"
+            nodeRefs[visitedNode[2]].visited = "false"
+        } else {
+            return visitedNode
+        }
+    }
     async function animateVisit(visitedNode) {
         await sleep(4)
-        return nodeRefs[visitedNode[2]].className = "w-4 h-4 border border-gray-800 bg-[#49C6C5]"
+        nodeRefs[visitedNode[2]].visited = "true"
+        return nodeRefs[visitedNode[2]].className = "w-4 h-4 border border-gray-800 bg-[#1C6CCC]"
     }
     async function animateResult(component, percolates) {
-        // console.log(component, percolates)
         if (percolates == true) {
             for (let nodeIdx in component) {
-                nodeRefs[nodeIdx].className = 'w-4 h-4 border border-gray-800 bg-[#8BE4BA]'
+                nodeRefs[nodeIdx].className = 'w-4 h-4 border border-gray-800 bg-[#17A7FF]'
             }
+
         } else {
             for (let nodeIdx in component) {
-                nodeRefs[nodeIdx].className = 'w-4 h-4 border border-gray-800 bg-[#3A59BF]'
+                nodeRefs[nodeIdx].className = 'w-4 h-4 border border-gray-800 bg-[#1E4EB3]'
             }
         }
     }
 
-    async function explore(nodes, row, col, visited, topVisited) {
+    async function explore(nodes, row, col, visited, failed) {
         let queue = [nodes[row][col]]
 
         while (queue.length > 0) {
             let current = queue.shift();
             await animateVisit(current)
-            if (current[0] == 23) return true;
-            // console.log(visited)
-            if (!visited[current[2]]) {
+            if (current[0] == 23) {
+                visited[current[2]] = true
+                return true
+            };
+            console.log(failed)
+            if (!visited[current[2]] && !failed[current[2]]) {
                 // if in bounds && open && not visited
                 if (current[0] - 1 > -1 && nodes[current[0] - 1][current[1]][3] == false && !visited[nodes[current[0] - 1][current[1]][2]]) {
                     queue.push(nodes[current[0] - 1][current[1]])
@@ -108,10 +122,17 @@ function PercolationVisualizer({ }) {
         return false
     }
 
+    let titleCSS = "uppercase font-semibold tracking-wider"
+    if (title == "does not percolate") {
+        titleCSS = "uppercase font-semibold tracking-wider text-red-600"
+    } else if (title == "percolates") {
+        titleCSS = "uppercase font-semibold tracking-wider text-green-600"
+    }
+
     return (
         <div className="flex flex-col">
             <div className="w-full flex justify-between items-center mb-1">
-                <h1 className="uppercase font-semibold tracking-wider">percolation</h1>
+                <h1 className={titleCSS}>{title}</h1>
                 <div className="flex text-xs space-x-2">
                     <button className="p-1 bg-blue-500 text-white rounded-lg px-2 " onClick={() => runPercolation(nodes)}> Start</button>
                     <button className="p-1 bg-blue-500 text-white rounded-lg px-2 " onClick={async () => { setUserReset(prev => !prev) }}> Reset</button>
@@ -122,12 +143,11 @@ function PercolationVisualizer({ }) {
                     return (
                         <div key={rowIdx} className="flex">
                             {row.map((node, i) => {
-                                let additionalCSS = "";
                                 let bg = node[3] ? " bg-slate-500 " : " bg-slate-700 "
-                                let border = node[2] == hoverIdx ? " border-gray-400 " : " border-gray-800 "
-                                let css = `w-4 h-4 border ${border} ${bg}`
+                                // let border = node[2] == hoverIdx ? " border-gray-400 " : " border-gray-800 "
+                                let css = `w-4 h-4 border border-gray-800 ${bg}`
                                 return (
-                                    <div ref={(ref) => { nodeRefs[node[2]] = ref; return true; }} className={css} key={i} onMouseEnter={() => setHoverIdx(node[2])} onMouseLeave={() => setHoverIdx()}>
+                                    <div ref={(ref) => { nodeRefs[node[2]] = ref; return true; }} visited="false" className={css} key={i} onMouseEnter={() => { setHoverIdx(node[2]) }} onMouseLeave={() => { setHoverIdx() }}>
                                     </div>)
                             })}
                         </div>
@@ -135,7 +155,6 @@ function PercolationVisualizer({ }) {
                 })}
             </div>
             <div className="flex text-xs text-slate-600 uppercase justify-between w-full mt-1">
-                <p>Hover Value: {hoverIdx}</p>
                 <div className="flex space-x-4">
                     <div className="flex items-center space-x-1">
                         <p>Open</p>
