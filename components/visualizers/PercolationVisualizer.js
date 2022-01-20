@@ -1,6 +1,5 @@
 import { useEffect, useState, createRef, useRef } from "react"
-import GridNode from "../GridNode"
-import randomNumber from '../../utils/random'
+
 import sleep from '../../utils/sleep'
 
 function PercolationVisualizer({ }) {

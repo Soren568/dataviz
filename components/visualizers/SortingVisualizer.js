@@ -2,12 +2,15 @@ import React, { useState, useEffect, createRef } from 'react'
 import randomNumber from '../../utils/random';
 import sleep from '../../utils/sleep';
 
-function SortingVisualizer({ userReset, setTitle, isPlaying }) {
+function SortingVisualizer({ }) {
     const [comparing, setComparing] = useState([]);
     const [array, setArray] = useState([])
     const [refArray, setRefArray] = useState([]);
     const [notes, setNotes] = useState("");
+    const [isPlaying, setIsPlaying] = useState(false);
     const [hoverVal, setHoverVal] = useState(0);
+    const [userReset, setUserReset] = useState(false)
+    const [title, setTitle] = useState("Sorting visualizer")
 
 
     useEffect(() => {
@@ -154,7 +157,6 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
     // ======================================================================
     // 
     const refIdxArray = Array(array.length).fill().map((num, i) => i)
-    console.log(refIdxArray)
     const mergeSort = async (arr = array, refs = refIdxArray) => {
         setTitle("Merge Sort")
         if (arr.length === 1) {
@@ -168,43 +170,42 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
         const leftRefArr = refs.slice(0, middleIndex)
         const rightRefArr = refs.slice(middleIndex)
         // RECURSIVE CALL
-        // console.log(leftRefArr, rightRefArr)
         const sortedLeft = await mergeSort(leftArr, leftRefArr)
         const sortedRight = await mergeSort(rightArr, rightRefArr)
         return await merge(sortedLeft, sortedRight, leftRefArr, rightRefArr)
     }
     const merge = async (left, right, leftRef, rightRef) => {
-        await sleep(50)
-        let leftCount = 0;
-        let rightCount = 0;
-        let sorted = [];
-        // Determine the heights of the current bars being compared
-        let heightLeft = (left[leftCount] / 1000) * 384;
-        let heightRight = (right[rightCount] / 1000) * 384;
-        while (leftCount < left.length && rightCount < right.length) {
-            if (left[leftCount] > right[rightCount]) {
-                console.log([refArray[leftRef[leftCount]], leftRef[leftCount], left[leftCount], heightLeft], [refArray[rightRef[rightCount]], rightRef[rightCount], right[rightCount], heightRight])
-
-
-                await swapAnimation(leftRef[leftCount], rightRef[rightCount], 1)
-                await swap(array, left[leftCount], right[rightCount], 1)
-                sorted.push(right[rightCount]);
-                rightCount++;
+        let sorted = []
+        let sortedRefs = []
+        // console.log(left, right)
+        let pointerL = 0
+        let pointerR = 0;
+        while (pointerL < left.length && pointerR < right.length) {
+            await sleep(1)
+            await animateCompare(leftRef[pointerL], rightRef[pointerR])
+            if (left[pointerL] < right[pointerR]) {
+                sortedRefs.push(leftRef[pointerL])
+                sorted.push(left[pointerL])
+                pointerL++
             } else {
-                // await swap(array, left[leftCount], right[rightCount], 1)
-                sorted.push(left[leftCount]);
-                leftCount++;
+                sortedRefs.push(rightRef[pointerR])
+                sorted.push(right[pointerR])
+                pointerR++
             }
         }
-        while (rightCount < right.length) {
-            sorted.push(right[rightCount]);
-            rightCount++;
+        while (pointerL < left.length) {
+            sortedRefs.push(leftRef[pointerL])
+            sorted.push(left[pointerL])
+            pointerL++
         }
-        while (leftCount < left.length) {
-            sorted.push(left[leftCount]);
-            leftCount++;
+        while (pointerR < right.length) {
+            sortedRefs.push(rightRef[pointerR])
+            sorted.push(right[pointerR])
+            pointerR++
         }
-        // console.log(leftCount, rightCount, sorted)
+        console.log(sortedRefs.length)
+        await animateAuxArr(sortedRefs, sorted)
+        if (sortedRefs.length == 100) await animateFinalOrder(sortedRefs, sorted)
         return sorted
     }
 
@@ -219,6 +220,41 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
             arr.push(randomNumber(5, 1000))
         }
         setArray(arr)
+    }
+
+    async function animateCompare(leftIdx, rightIdx) {
+        let bgColor = " bg-blue-300 "
+        refArray[leftIdx].className = `array-bar mt-auto w-1 md:w-[4px] lg:w-[6px] xl:w-[8px] ${bgColor} hover:bg-red-500 `
+        refArray[rightIdx].className = `array-bar mt-auto w-1 md:w-[4px] lg:w-[6px] xl:w-[8px] ${bgColor} hover:bg-red-500 `
+        await sleep(3)
+        bgColor = 'bg-blue-600'
+        refArray[leftIdx].className = `array-bar mt-auto w-1 md:w-[4px] lg:w-[6px] xl:w-[8px] ${bgColor} hover:bg-red-500 `
+        refArray[rightIdx].className = `array-bar mt-auto w-1 md:w-[4px] lg:w-[6px] xl:w-[8px] ${bgColor} hover:bg-red-500 `
+    }
+
+    async function animateAuxArr(sortedRefArr, sortedArr) {
+        for (let i = 0; i < sortedRefArr.length; i++) {
+            // console.log(i, sortedArr[i])
+            await sleep(1)
+            refArray[sortedRefArr[i]].style.height = `${(sortedArr[i] / 1000) * 384}px`
+            refArray[sortedRefArr[i]].value = `${sortedArr[i]}`
+            // console.log(refArray[sortedRefArr[i]].style.height, sortedArr[i])
+        }
+    }
+
+    async function animateFinalOrder(sortedRefArr, sortedArr) {
+        console.log(sortedRefArr)
+        for (let i = 0; i < 100; i++) {
+            let bgColor = " bg-green-300 "
+            console.log(i)
+            refArray[i].style.height = `${(sortedArr[i] / 1000) * 384}px`
+            refArray[i].value = `${sortedArr[i]}`
+            refArray[i].className = `array-bar mt-auto w-1 md:w-[4px] lg:w-[6px] xl:w-[8px] ${bgColor} hover:bg-red-500 `
+
+            await sleep(5)
+            bgColor = 'bg-blue-600'
+            refArray[i].className = `array-bar mt-auto w-1 md:w-[4px] lg:w-[6px] xl:w-[8px] ${bgColor} hover:bg-red-500 `
+        }
     }
 
     function divHeight(index) {
@@ -248,6 +284,11 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
 
     return (
         <div className="flex flex-col">
+            <div className="flex w-3/4 mx-auto mt-5 mb-1 items-center">
+                <h1 className="uppercase font-semibold tracking-wider mr-auto">{title}</h1>
+                <button onClick={() => setUserReset(prev => !prev)} className="px-4 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">New Array</button>
+                {isPlaying ? <button onClick={() => setIsPlaying(false)} className="px-4 py-1 ml-2 bg-red-400 text-xs tracking-widest uppercase text-white hover:bg-rose-600 rounded-lg transition-all ease-in-out">Stop</button> : null}
+            </div>
             <div className="h-96 w-3/4 mx-auto bg-gray-700 flex justify-between">
                 {array?.map((num, i) => {
                     // turn value into height percentage
@@ -258,7 +299,7 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
                     let bgColor = (comparing.includes(i) ? 'bg-blue-400' : "bg-blue-600")
                     let value = num
                     return (
-                        <div key={i} style={barStyle} ref={(ref) => { refArray[i] = ref; return true; }} value={value} className={`array-bar mt-auto w-1 md:w-[4px] lg:w-[6px] xl:w-[8px] ${bgColor} hover:bg-red-500 `} onClick={() => console.log(value)} onMouseEnter={() => setHoverVal(value)} onMouseLeave={() => setHoverVal()}></div>
+                        <div key={i} style={barStyle} ref={(ref) => { refArray[i] = ref; return true; }} value={`${value}`} className={`array-bar mt-auto w-1 md:w-[4px] lg:w-[6px] xl:w-[8px] ${bgColor} hover:bg-red-500 `} onClick={() => console.log(value)} onMouseEnter={() => setHoverVal(refArray[i].value || num)} onMouseLeave={() => setHoverVal()}></div>
                     )
                 }
                 )}
@@ -268,10 +309,10 @@ function SortingVisualizer({ userReset, setTitle, isPlaying }) {
                 <p className="text-xs text-gray-500 tracking-wide">{notes}</p>
             </div>
             <div className="w-3/4 flex justify-between mx-auto flex-wrap ">
-                <button onClick={() => mergeSort()} className="px-4 my-1 py-1 bg-gray-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Merge Sort</button>
+                <button onClick={() => mergeSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Merge Sort</button>
                 <button onClick={() => quickSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Quick Sort</button>
                 <button onClick={() => heapSort()} className="px-4 my-1 py-1 bg-gray-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out" >Heap Sort</button>
-                <button onClick={() => bubbleSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Bubble Sort</button>
+                <button onClick={() => { bubbleSort() }} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Bubble Sort</button>
                 <button onClick={() => selectionSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Selection Sort</button>
                 <button onClick={() => insertionSort()} className="px-4 my-1 py-1 bg-blue-500 text-xs tracking-widest uppercase text-gray-200 hover:bg-blue-600 rounded-lg transition-all ease-in-out">Insertion Sort</button>
             </div>
