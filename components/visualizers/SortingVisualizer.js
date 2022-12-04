@@ -236,8 +236,13 @@ function SortingVisualizer({ }) {
         for (let i = 0; i < sortedRefArr.length; i++) {
             // console.log(i, sortedArr[i])
             await sleep(1)
-            refArray[sortedRefArr[i]].style.height = `${(sortedArr[i] / 1000) * 384}px`
-            refArray[sortedRefArr[i]].value = `${sortedArr[i]}`
+            try {
+                refArray[sortedRefArr[i]].style.height = `${(sortedArr[i] / 1000) * 384}px`
+                refArray[sortedRefArr[i]].value = `${sortedArr[i]}`
+            }
+            catch {
+                return
+            }
             // console.log(refArray[sortedRefArr[i]].style.height, sortedArr[i])
         }
     }

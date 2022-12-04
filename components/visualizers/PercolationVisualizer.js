@@ -98,7 +98,6 @@ function PercolationVisualizer({ }) {
                 visited[current[2]] = true
                 return true
             };
-            console.log(failed)
             if (!visited[current[2]] && !failed[current[2]]) {
                 // if in bounds && open && not visited
                 if (current[0] - 1 > -1 && nodes[current[0] - 1][current[1]][3] == false && !visited[nodes[current[0] - 1][current[1]][2]]) {

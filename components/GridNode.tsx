@@ -1,7 +1,7 @@
 import { Icon } from '@iconify/react'
 
-
-function GridNode({ row, col, index, ref, isStart, isDestination, isBlocked, hoverNode, visitedNodes }) {
+type Props = { row: number, col: number, index: number, ref: any, isStart: boolean, isDestination: boolean, isBlocked: boolean, hoverNode: number, visitedNodes: any }
+const GridNode: React.FC<Props> = ({ row, col, index, ref, isStart, isDestination, isBlocked, hoverNode, visitedNodes }) => {
     let additionalCSS = "";
     isStart ? additionalCSS = "bg-teal-300" : null
     isDestination ? additionalCSS = "bg-fuchsia-600" : null

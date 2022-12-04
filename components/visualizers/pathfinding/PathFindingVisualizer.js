@@ -68,6 +68,58 @@ function PathFindingVisualizer({ }) {
         }
     }
 
+    // DFS
+    async function DFS() {
+        let visited = new Set();
+        let stack = [startCell];
+        let i = 0;
+        while (stack.length > 0) {
+            i++;
+            let current = stack.pop();
+            if (current[5] === true) return animateResult(current, nodes, nodeRefs);
+            let [curRow, curCol, curRefIdx, isBlocked] = current;
+
+            // coordinates
+            let coordsStr = curRow + ',' + curCol;
+            let upCoords = (curRow - 1) + ',' + (curCol);
+            let downCoords = (curRow + 1) + ',' + (curCol);
+            let rightCoords = (curRow) + ',' + (curCol + 1);
+            let leftCoords = (curRow) + ',' + (curCol - 1);
+
+            if (!isBlocked) {
+                visited.has(coordsStr) ? null : visited.add(coordsStr);
+                if (!current[4]) {
+                    await animateVisit(current);
+                }
+                let distance = current[6]
+                // down
+                if (curRow + 1 < nodes.length && !visited.has(downCoords)) {
+                    nodes[curRow + 1][curCol][6] = distance + 1
+                    stack.push(nodes[curRow + 1][curCol])
+                    visited.add(downCoords)
+                }
+                // right
+                if (curCol + 1 < nodes[0].length && !visited.has(rightCoords)) {
+                    nodes[curRow][curCol + 1][6] = distance + 1
+                    stack.push(nodes[curRow][curCol + 1])
+                    visited.add(rightCoords)
+                }
+                // up
+                if (curRow - 1 >= 0 && !visited.has(upCoords)) {
+                    nodes[curRow - 1][curCol][6] = distance + 1
+                    stack.push(nodes[curRow - 1][curCol])
+                    visited.add(upCoords)
+                }
+                // left
+                if (curCol - 1 >= 0 && !visited.has(leftCoords)) {
+                    nodes[curRow][curCol - 1][6] = distance + 1
+                    stack.push(nodes[curRow][curCol - 1])
+                    visited.add(leftCoords)
+                }
+            }
+        }
+    }
+
     // BFS
     async function BFS() {
         let visited = new Set()
@@ -76,7 +128,7 @@ function PathFindingVisualizer({ }) {
         while (queue.length > 0) {
             i++
             let current = queue.shift()
-            if (current[5] == true) return animateResult(current)
+            if (current[5] == true) return animateResult(current, nodes, nodeRefs)
             // console.log({ current })
             // console.log({ queue })
             let [curRow, curCol, curRefIdx, isBlocked] = current
@@ -86,21 +138,25 @@ function PathFindingVisualizer({ }) {
                     await animateVisit(current)
                 }
                 let distance = current[6]
+                // up
                 if (curRow - 1 >= 0 && visited.has((curRow - 1) + ',' + curCol) != true) {
                     nodes[curRow - 1][curCol][6] = distance + 1
                     queue.push(nodes[curRow - 1][curCol])
                     visited.add((curRow - 1) + ',' + curCol)
                 }
+                // down
                 if (curRow + 1 < nodes.length && visited.has((curRow + 1) + ',' + curCol) != true) {
                     nodes[curRow + 1][curCol][6] = distance + 1
                     queue.push(nodes[curRow + 1][curCol])
                     visited.add((curRow + 1) + ',' + curCol)
                 }
+                // right
                 if (curCol + 1 < nodes[0].length && visited.has(curRow + ',' + (curCol + 1)) != true) {
                     nodes[curRow][curCol + 1][6] = distance + 1
                     queue.push(nodes[curRow][curCol + 1])
                     visited.add(curRow + ',' + (curCol + 1))
                 }
+                // left
                 if (curCol - 1 >= 0 && visited.has(curRow + ',' + (curCol - 1)) != true) {
                     nodes[curRow][curCol - 1][6] = distance + 1
                     queue.push(nodes[curRow][curCol - 1])
@@ -115,34 +171,7 @@ function PathFindingVisualizer({ }) {
         await sleep(10)
         return nodeRefs[visitedNode[2]].className = "w-4 h-4 border border-gray-800 bg-[#1E4EB3]"
     }
-    async function animateResult(node) {
-        await sleep(6)
-        if (node[4]) return
-        if (!node[4] && !node[5]) {
-            nodeRefs[node[2]].className = 'w-4 h-4 border border-gray-800 bg-[#17A7FF]'
-        }
-        let [curRow, curCol] = node
-        let shortestPath = node[6]
-        let nextNode;
-        if (curRow - 1 >= 0 && nodes[curRow - 1][curCol][6] < shortestPath && !nodes[curRow - 1][curCol][3]) {
-            shortestPath = nodes[curRow - 1][curCol][6]
-            nextNode = nodes[curRow - 1][curCol]
-        }
-        if (curRow + 1 < nodes.length && nodes[curRow + 1][curCol][6] < shortestPath && !nodes[curRow + 1][curCol][3]) {
-            shortestPath = nodes[curRow + 1][curCol][6]
-            nextNode = nodes[curRow + 1][curCol]
-        }
-        if (curCol + 1 < nodes[0].length && nodes[curRow][curCol + 1][6] < shortestPath && !nodes[curRow][curCol + 1][3]) {
-            shortestPath = nodes[curRow][curCol + 1][6]
-            nextNode = nodes[curRow][curCol + 1]
-        }
-        if (curCol - 1 >= 0 && nodes[curRow][curCol - 1][6] < shortestPath && !nodes[curRow][curCol - 1][3]) {
-            shortestPath = nodes[curRow][curCol - 1][6]
-            nextNode = nodes[curRow][curCol - 1]
-        }
-        if (nextNode) animateResult(nextNode)
 
-    }
 
     return (
         <div className="flex flex-col">
@@ -184,10 +213,40 @@ function PathFindingVisualizer({ }) {
                 })}
             </div>
             <div className="flex mt-1">
-                <button className="p-1 bg-blue-500 text-white rounded-lg px-2" onClick={() => BFS()}>BFS</button>
+                <button className="p-1 bg-blue-500 text-white rounded-lg px-2 mr-1" onClick={() => BFS()}>BFS</button>
+                <button className="p-1 bg-blue-500 text-white rounded-lg px-2 mx-1" onClick={() => DFS()}>DFS</button>
             </div>
         </div>
     )
+}
+
+export async function animateResult(node, nodes, nodeRefs) {
+    await sleep(6)
+    if (node[4]) return
+    if (!node[4] && !node[5]) {
+        nodeRefs[node[2]].className = 'w-4 h-4 border border-gray-800 bg-[#17A7FF]'
+    }
+    let [curRow, curCol] = node
+    let shortestPath = node[6]
+    let nextNode;
+    if (curRow - 1 >= 0 && nodes[curRow - 1][curCol][6] < shortestPath && !nodes[curRow - 1][curCol][3]) {
+        shortestPath = nodes[curRow - 1][curCol][6]
+        nextNode = nodes[curRow - 1][curCol]
+    }
+    if (curRow + 1 < nodes.length && nodes[curRow + 1][curCol][6] < shortestPath && !nodes[curRow + 1][curCol][3]) {
+        shortestPath = nodes[curRow + 1][curCol][6]
+        nextNode = nodes[curRow + 1][curCol]
+    }
+    if (curCol + 1 < nodes[0].length && nodes[curRow][curCol + 1][6] < shortestPath && !nodes[curRow][curCol + 1][3]) {
+        shortestPath = nodes[curRow][curCol + 1][6]
+        nextNode = nodes[curRow][curCol + 1]
+    }
+    if (curCol - 1 >= 0 && nodes[curRow][curCol - 1][6] < shortestPath && !nodes[curRow][curCol - 1][3]) {
+        shortestPath = nodes[curRow][curCol - 1][6]
+        nextNode = nodes[curRow][curCol - 1]
+    }
+    if (nextNode) animateResult(nextNode, nodes, nodeRefs)
+
 }
 
 export default PathFindingVisualizer
